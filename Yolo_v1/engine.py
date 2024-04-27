@@ -1,7 +1,7 @@
 import torch
 from loguru import logger
 
-from utils import mean_average_precision
+from utils import mean_average_precision, cell_to_boxes
 
 def train_one_epoch(model, dataloader, criterion, optimizer, scheduler, device, epoch=0):
     model.train()
@@ -23,9 +23,8 @@ def evaluate(model, dataloader, device, epoch):
         for batch_idx, (inputs, targets) in enumerate(dataloader):
             inputs, targets = inputs.to(device), targets.to(device)
             outputs = model(inputs)
-            pred_boxes = cell_to_boxes(outputs, model.)
+            pred_boxes = cell_to_boxes(outputs)
             tgt_boxes = cell_to_boxes(targets)
-            import pdb; pdb.set_trace()
     return
 
 def infer():
