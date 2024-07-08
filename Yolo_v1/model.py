@@ -56,7 +56,17 @@ class Yolov1(nn.Module):
         self.in_channels = in_channels
         self.darknet = self._create_conv_layers(self.architecture)
         self.fcs = self._create_fcs(**kwargs)
+        self.darknet.apply(self.init_weights)
+        self.fcs.apply(self.init_weights)
 
+    @staticmethod
+    def init_weights(m):
+        if isinstance(m, nn.Linear):
+            torch.nn.init.xavier_uniform_(m.weight)
+            m.bias.data.fill_(0.01)
+        if isinstance(m, nn.Conv2d):
+            torch.nn.init.xavier_uniform_(m.weight)
+    
     def forward(self, x):
         x = self.darknet(x)
         return self.fcs(torch.flatten(x, start_dim=1))
@@ -64,44 +74,40 @@ class Yolov1(nn.Module):
     def _create_conv_layers(self, architecture):
         layers = []
         in_channels = self.in_channels
+        
+        # First block in picture
+        layers.append(CNNBlock(in_channels=in_channels, out_channels=64, kernel_size=(7, 7), stride=(2,2), padding=(3, 3)))
+        layers.append(nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2)))
 
-        for x in architecture:
-            if type(x) == tuple:
-                layers += [
-                    CNNBlock(
-                        in_channels, x[1], kernel_size=x[0], stride=x[2], padding=x[3],
-                    )
-                ]
-                in_channels = x[1]
+        # Second block
+        layers.append(CNNBlock(in_channels=64, out_channels=192, kernel_size=(3, 3), padding=(1, 1)))
+        layers.append(nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2)))
 
-            elif type(x) == str:
-                layers += [nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2))]
+        # Third block
+        layers.append(CNNBlock(in_channels=192, out_channels=128, kernel_size=(1, 1), padding=(0, 0)))
+        layers.append(CNNBlock(in_channels=128, out_channels=256, kernel_size=(3, 3), padding=(1, 1)))
+        layers.append(CNNBlock(in_channels=256, out_channels=256, kernel_size=(1, 1), padding=(0, 0)))
+        layers.append(CNNBlock(in_channels=256, out_channels=512, kernel_size=(3, 3), padding=(1, 1)))
+        layers.append(nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2)))
 
-            elif type(x) == list:
-                conv1 = x[0]
-                conv2 = x[1]
-                num_repeats = x[2]
+        # 4th block
+        for i in range(4):
+            layers.append(CNNBlock(in_channels=512, out_channels=256, kernel_size=(1, 1), padding=(0, 0)))
+            layers.append(CNNBlock(in_channels=256, out_channels=512, kernel_size=(3, 3), padding=(1, 1)))
+        layers.append(CNNBlock(in_channels=512, out_channels=512, kernel_size=(1, 1), padding=(0, 0)))
+        layers.append(CNNBlock(in_channels=512, out_channels=1024, kernel_size=(3, 3), padding=(1, 1)))
+        layers.append(nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2)))
 
-                for _ in range(num_repeats):
-                    layers += [
-                        CNNBlock(
-                            in_channels,
-                            conv1[1],
-                            kernel_size=conv1[0],
-                            stride=conv1[2],
-                            padding=conv1[3],
-                        )
-                    ]
-                    layers += [
-                        CNNBlock(
-                            conv1[1],
-                            conv2[1],
-                            kernel_size=conv2[0],
-                            stride=conv2[2],
-                            padding=conv2[3],
-                        )
-                    ]
-                    in_channels = conv2[1]
+        # 5th block
+        for i in range(2):
+            layers.append(CNNBlock(in_channels=1024, out_channels=512, kernel_size=(1, 1), padding=(0, 0)))
+            layers.append(CNNBlock(in_channels=512, out_channels=1024, kernel_size=(3, 3), padding=(1, 1)))
+        layers.append(CNNBlock(in_channels=1024, out_channels=1024, kernel_size=(3, 3), padding=(1, 1)))
+        layers.append(CNNBlock(in_channels=1024, out_channels=1024, kernel_size=(3, 3), stride=(2, 2), padding=(1, 1)))
+
+        # 6th block
+        layers.append(CNNBlock(in_channels=1024, out_channels=1024, kernel_size=(3, 3), padding=(1, 1)))
+        layers.append(CNNBlock(in_channels=1024, out_channels=1024, kernel_size=(3, 3), padding=(1, 1)))
 
         return nn.Sequential(*layers)
 

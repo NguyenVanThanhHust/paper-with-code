@@ -3,8 +3,12 @@ import numpy as np
 
 from collections import Counter
 
-def cell_to_boxes(cell_tensor: torch.Tensor) -> torch.Tensor:
+def predictions_to_boxes(cell_tensor: torch.Tensor) -> torch.Tensor:
+    import pdb; pdb.set_trace()
+    return 
 
+def targets_to_boxes(cell_tensor: torch.Tensor) -> torch.Tensor:
+    import pdb; pdb.set_trace()
     return 
 
 def calculate_iou(box1: torch.Tensor, box2: torch.Tensor) -> torch.Tensor:

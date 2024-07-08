@@ -22,7 +22,7 @@ def get_args():
     parser.add_argument('-bs', '--batch_size', type=int, default=16, help='batch size')
     parser.add_argument('--num_workers', type=int, default=0, help='number of worker for data loader')
     parser.add_argument('--epochs', type=int, default=2, help='number of worker for data loader')
-    parser.add_argument('--lr', type=float, default=0.001, help='learning rate')
+    parser.add_argument('--lr', type=float, default=0.0001, help='learning rate')
 
     parser.add_argument('--task', choices=['train', 'evaluate', 'infer'], default='train', help='task to be done')
     parser.add_argument('--pretrain_ckpt', type=str, help='pretrained checkpoint path')
@@ -42,9 +42,15 @@ if __name__ == "__main__":
         device = torch.device('cuda')
     else:
         device = torch.device('cpu')
+    device = torch.device('cpu')
 
     if args.task == 'train':
         logger.info("Start to train")
         for epoch in range(args.epochs):
             train_one_epoch(model, train_dataloader,criterion, optimizer, scheduler, device, epoch)
             evaluate(model, val_dataloader, device, epoch)
+    elif args.task == 'evaluate':
+        logger.info("Start to evaluate")
+        evaluate(model, val_dataloader, device)
+    else:
+        logger.info("Start inference")
