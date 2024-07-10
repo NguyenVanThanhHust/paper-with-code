@@ -1,7 +1,7 @@
 import torch
 from loguru import logger
 
-from utils import mean_average_precision, targets_to_boxes, predictions_to_boxes
+from utils import mean_average_precision, prediction_tensor_to_boxes, target_tensor_to_boxes
 
 def train_one_epoch(model, dataloader, criterion, optimizer, scheduler, device, epoch=0):
     model.train()
@@ -23,10 +23,8 @@ def evaluate(model, dataloader, device):
         for batch_idx, (inputs, targets) in enumerate(dataloader):
             inputs, targets = inputs.to(device), targets.to(device)
             outputs = model(inputs)
-            tgt_boxes = targets_to_boxes(targets)
-            import pdb; pdb.set_trace()
-            pred_boxes = predictions_to_boxes(outputs)
-            print(tgt_boxes, pred_boxes)
+            pred_boxes = prediction_tensor_to_boxes(outputs, model.split_size, model.num_boxes, model.num_classes)
+            tgt_boxes = target_tensor_to_boxes(targets, model.split_size, model.num_boxes, model.num_classes)
             mAP = mean_average_precision(pred_boxes, tgt_boxes)
             logger.info(f"Batch: {batch_idx} mAP: {mAP}")        
 

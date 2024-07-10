@@ -42,7 +42,7 @@ if __name__ == "__main__":
         device = torch.device('cuda')
     else:
         device = torch.device('cpu')
-    device = torch.device('cpu')
+    # device = torch.device('cpu')
 
     if args.task == 'train':
         logger.info("Start to train")

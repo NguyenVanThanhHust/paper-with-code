@@ -50,12 +50,15 @@ class CNNBlock(nn.Module):
 
 
 class Yolov1(nn.Module):
-    def __init__(self, in_channels=3, **kwargs):
+    def __init__(self, in_channels=3, split_size=7, num_boxes=2, num_classes=20, **kwargs):
         super(Yolov1, self).__init__()
         self.architecture = architecture_config
         self.in_channels = in_channels
+        self.split_size = split_size
+        self.num_boxes = num_boxes
+        self.num_classes = num_classes
         self.darknet = self._create_conv_layers(self.architecture)
-        self.fcs = self._create_fcs(**kwargs)
+        self.fcs = self._create_fcs(split_size, num_boxes, num_classes, **kwargs)
         self.darknet.apply(self.init_weights)
         self.fcs.apply(self.init_weights)
 
