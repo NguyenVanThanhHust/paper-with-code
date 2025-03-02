@@ -1,9 +1,3 @@
-import marimo
-
-__generated_with = "0.1.88"
-app = marimo.App()
-
-
 # https://github.com/aladdinpersson/Machine-Learning-Collection/blob/master/ML/Pytorch/object_detection/YOLO/model.py
 
 import torch
