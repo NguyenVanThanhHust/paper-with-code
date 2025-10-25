@@ -129,7 +129,11 @@ def build_model(args):
 
 if __name__ == '__main__':
     yolo = Yolov1(split_size=7, num_boxes=2, num_classes=20)
+    input_tensor = torch.rand((1, 3, 448, 448), dtype=torch.float)
+    output = yolo(input_tensor)
+    print(output.shape)
 
+    yolo = Yolov1(split_size=7, num_boxes=1, num_classes=80)
     input_tensor = torch.rand((1, 3, 448, 448), dtype=torch.float)
     output = yolo(input_tensor)
     print(output.shape)

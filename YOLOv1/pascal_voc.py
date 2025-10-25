@@ -45,7 +45,7 @@ def read_content(xml_file: str):
     tree = ET.parse(xml_file)
     root = tree.getroot()
 
-    list_with_all_boxes = []
+    all_boxes = []
 
     im_width = int(root.find('size/width').text)
     im_height = int(root.find('size/height').text)
@@ -64,10 +64,10 @@ def read_content(xml_file: str):
         width, height = xmax-xmin, ymax-ymin
         # x_center, y_center = x_center / im_width, y_center / im_height
         # width, height = width / im_width, height / im_height
-        list_with_single_boxes = [cls_index, x_center, y_center, width, height]
-        list_with_all_boxes.append(list_with_single_boxes)
+        single_box = [cls_index, x_center, y_center, width, height]
+        all_boxes.append(single_box)
 
-    return list_with_all_boxes
+    return all_boxes
 
 
 class PascalVoc(Dataset):
@@ -102,7 +102,6 @@ class PascalVoc(Dataset):
         print(f"number of images: {self.__len__()}")
 
     def __len__(self):
-        return 10
         return len(self.img_paths)
 
     def __getitem__(self, idx):
@@ -146,17 +145,17 @@ class Rescale(object):
     def __call__(self, sample):
         image, boxes = sample
         height, width, channels = image.shape
-        if height > width:
-            ratio = self.max_size / height
+        max_hw = max(height, width)
+        if max_hw > self.max_size:
+            ratio = self.max_size / max_hw
         else:
-            ratio = self.max_size / width
-
+            ratio = max_hw / self.max_size
         new_h, new_w = int(height*ratio), int(width*ratio)
         img = cv2.resize(image, (new_w, new_h))
-        boxes[:, 1] = boxes[:, 1] * ratio / new_w
-        boxes[:, 2] = boxes[:, 2] * ratio / new_h
-        boxes[:, 3] = boxes[:, 3] * ratio / new_w
-        boxes[:, 4] = boxes[:, 4] * ratio / new_h
+        boxes[:, 1] = boxes[:, 1] * ratio # / new_w
+        boxes[:, 2] = boxes[:, 2] * ratio # / new_h
+        boxes[:, 3] = boxes[:, 3] * ratio # / new_w
+        boxes[:, 4] = boxes[:, 4] * ratio # / new_h
         new_img = np.zeros([self.max_size, self.max_size, 3], dtype=image.dtype)
         new_img[:new_h, :new_w, :] = img
         return new_img, boxes

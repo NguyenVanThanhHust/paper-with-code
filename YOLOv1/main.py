@@ -6,7 +6,6 @@ import torch.optim as optim
 
 from loguru import logger
 
-from pascal_voc import build_dataloader
 from losses import build_loss
 from model import build_model
 from engine import train_one_epoch, evaluate
@@ -14,6 +13,7 @@ from engine import train_one_epoch, evaluate
 def get_args():
     parser = argparse.ArgumentParser("YOLO v1")
     parser.add_argument('--data_folder', type=str, default="../../Datasets/PASCAL_VOC/")
+    parser.add_argument('--data_set', type=str, choices=["VOC", "COCO"], default="VOC")
     
     parser.add_argument('--S', type=int, default=7, help="number of cell  in each dim")
     parser.add_argument('--B', type=int, default=2, help="number of prediction in each cell")
@@ -30,9 +30,12 @@ def get_args():
 
 if __name__ == "__main__":
     args = get_args()
+    if args.data_set == "VOC":
+        from pascal_voc import build_dataloader
+    else:
+        from coco_datasets import build_dataloader    
     train_dataloader = build_dataloader(args, split="train")
     val_dataloader = build_dataloader(args, split="val")
-    
     model = build_model(args)
     criterion = build_loss(args)
     optimizer = optim.SGD(model.parameters(), lr=args.lr,
@@ -42,7 +45,6 @@ if __name__ == "__main__":
         device = torch.device('cuda')
     else:
         device = torch.device('cpu')
-    # device = torch.device('cpu')
 
     if args.task == 'train':
         logger.info("Start to train")

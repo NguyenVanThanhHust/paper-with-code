@@ -43,13 +43,12 @@ class CocoDetectionDataset(Dataset):
 
     
 if __name__ == '__main__':
-    # coco_dataset = CocoDetectionDataset(image_folder="/home/thanhnv154te/workspace/Datasets/COCO/train2017", annFile="/home/thanhnv154te/workspace/Datasets/COCO/annotations_trainval2017/annotations/instances_train2017.json")
     val_transform = transforms.Compose([
         ToTensor()
     ])
     
-    coco_dataset = CocoDetectionDataset(image_folder="/home/thanhnv154te/workspace/Datasets/COCO/val2017", 
-                                        annFile="/home/thanhnv154te/workspace/Datasets/COCO/annotations_trainval2017/annotations/instances_val2017.json",
+    coco_dataset = CocoDetectionDataset(image_folder="../input/COCO/val2017", 
+                                        annFile="../input/COCO/annotations_trainval2017/annotations/instances_val2017.json",
                                         transform=val_transform)
     print(len(coco_dataset))
     coco_dataloader = DataLoader(coco_dataset, 2, False)
