@@ -16,7 +16,7 @@ def train_one_epoch(model, dataloader, criterion, optimizer, scheduler, device, 
         optimizer.step()
         logger.info("Epoch: {} Batch: {}/{} Loss: {}".format(epoch, batch_idx, len(dataloader), loss.item()))        
 
-def evaluate(model, dataloader, device):
+def evaluate(model, dataloader, device, epoch):
     model.eval()
     model = model.to(device)
     with torch.no_grad():
@@ -24,8 +24,8 @@ def evaluate(model, dataloader, device):
             inputs, targets = inputs.to(device), targets.to(device)
             outputs = model(inputs)
             pred_boxes = prediction_tensor_to_boxes(outputs, model.split_size, model.num_boxes, model.num_classes)
-            tgt_boxes = target_tensor_to_boxes(targets, model.split_size, model.num_boxes, model.num_classes)
-            mAP = mean_average_precision(pred_boxes, tgt_boxes)
+            tgt_boxes = target_tensor_to_boxes(targets, model.split_size, model.num_classes)
+            mAP = mean_average_precision(pred_boxes, tgt_boxes, num_classes=model.num_classes)
             logger.info(f"Batch: {batch_idx} mAP: {mAP}")        
 
 def infer():

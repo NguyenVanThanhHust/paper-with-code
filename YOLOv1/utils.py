@@ -55,49 +55,26 @@ def prediction_tensor_to_boxes(out, split_size:int=7, num_boxes: int=2, num_clas
 
     return all_bboxes
 
-def convert_target_tensor(targets, split_size:int=7, num_boxes: int=2, num_classes:int=20):
-    """
-    Converts bounding boxes output from Yolo with
-    an image split size of S into entire image ratios
-    rather than relative to cell ratios. Tried to do this
-    vectorized, but this resulted in quite difficult to read
-    code... Use as a black box? Or implement a more intuitive,
-    using 2 for loops iterating range(S) and convert them one
-    by one, resulting in a slower but more readable implementation.
-    """
 
-    targets = targets.to("cpu")
-    batch_size = targets.shape[0]
-    targets = targets.reshape(batch_size, split_size, split_size, num_classes + 5)
-    bboxes1 = targets[..., num_classes+1:num_classes+5] 
-    is_object = targets[..., num_classes].unsqueeze(-1)
-
-    best_boxes = bboxes1
-    cell_indices = torch.arange(split_size).repeat(batch_size, split_size, 1).unsqueeze(-1)
-    x = 1 / split_size * (best_boxes[..., :1] + cell_indices)
-    y = 1 / split_size * (best_boxes[..., 1:2] + cell_indices.permute(0, 2, 1, 3))
-    w_y = 1 / split_size * best_boxes[..., 2:4]
-    converted_bboxes = torch.cat((x, y, w_y), dim=-1)
-    targets_class = targets[..., :num_classes].argmax(-1).unsqueeze(-1)
-    
-    converted_targets = torch.cat(
-        (targets_class, is_object, converted_bboxes), dim=-1
-    )
-
-    return converted_targets
-
-def target_tensor_to_boxes(out, split_size:int=7, num_boxes: int=2, num_classes:int=20):
-    converted_pred = convert_target_tensor(out, split_size, num_boxes, num_classes).reshape(out.shape[0], split_size * split_size, -1)
-    converted_pred[..., 0] = converted_pred[..., 0].long()
+def target_tensor_to_boxes(tgts, split_size:int=7, num_classes:int=20):
+    batch_size = tgts.shape[0]
     all_bboxes = []
-
-    for ex_idx in range(out.shape[0]):
-        bboxes = []
-
-        for bbox_idx in range(split_size * split_size):
-            bboxes.append([x.item() for x in converted_pred[ex_idx, bbox_idx, :]])
-        all_bboxes.append(bboxes)
-
+    for b in range(batch_size):
+        tgt_tensor = tgts[b]
+        cls_tensor = tgt_tensor[:, :, :num_classes]
+        positions = torch.nonzero(cls_tensor == 1)
+        positions = positions.detach().cpu().numpy().tolist()
+        boxes = []
+        for position in positions:
+            row, col, cls_idx = position
+            box_tensor = tgt_tensor[row, col, -4:]
+            offset_cx, offset_cy, scaled_w, scaled_h  = box_tensor.detach().cpu().numpy().tolist()
+            cx = (offset_cx + col) / split_size
+            cy = (offset_cy + row) / split_size
+            w, h = scaled_w / split_size, scaled_h / split_size
+            box = [cls_idx, cx, cy, w, h]
+            boxes.append(box)
+        all_bboxes.append(boxes)
     return all_bboxes
 
 def calculate_iou(box1: torch.Tensor, box2: torch.Tensor) -> torch.Tensor:
