@@ -8,7 +8,7 @@ from loguru import logger
 
 from losses import build_loss
 from model import build_model
-from engine import train_one_epoch, evaluate
+from engine import train_one_epoch, evaluate, evaluate_tmp
 
 def get_args():
     parser = argparse.ArgumentParser("YOLO v1")
@@ -50,9 +50,10 @@ if __name__ == "__main__":
         logger.info("Start to train")
         for epoch in range(args.epochs):
             train_one_epoch(model, train_dataloader,criterion, optimizer, scheduler, device, epoch)
-            evaluate(model, val_dataloader, device, epoch)
+            # evaluate(model, val_dataloader, device, epoch)
+            evaluate_tmp(model, val_dataloader, criterion, device, epoch)
     elif args.task == 'evaluate':
         logger.info("Start to evaluate")
-        evaluate(model, val_dataloader, device)
+        evaluate(model, val_dataloader, device, 0)
     else:
         logger.info("Start inference")

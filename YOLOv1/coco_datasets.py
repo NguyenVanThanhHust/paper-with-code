@@ -26,7 +26,6 @@ class CocoDetectionDataset(Dataset):
         self.C = C
 
     def __len__(self):
-        return 4
         return len(self.img_ids)
     
     def __getitem__(self, index):
